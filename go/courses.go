@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 )
 
 // Hole represents the outcomes for all rolls on a single hole
@@ -33,4 +34,51 @@ func loadCourse(name string) Course {
 	}
 
 	return course
+}
+
+func holeOutcome(course Course, holeNumber string, playerOutcome string, thirdDie int) (int, string, error) {
+	holeData, exists := course.Holes[holeNumber]
+	if !exists {
+		return 0, "", fmt.Errorf("hole %s does not exist", holeNumber)
+	}
+	
+	var holeOutcome string
+	switch thirdDie {
+	case 1, 2:
+		holeOutcome = holeData.Outcomes[playerOutcome].W
+	case 3, 4:
+		holeOutcome = holeData.Outcomes[playerOutcome].I
+	case 5, 6:
+		holeOutcome = holeData.Outcomes[playerOutcome].P
+	}
+
+	outcomeInt, err := strconv.Atoi(holeOutcome)
+	if err != nil {
+		fmt.Print("Error converting string to int")
+		//return 0,"", "", fmt.Errorf("error converting string to int: %v", err)
+	}
+
+	description := describeHoleOutcome(outcomeInt, holeData.Par)
+	return outcomeInt, description, nil
+}
+
+func describeHoleOutcome(outcomeInt, par int) string {
+	switch outcomeInt - par {
+	case 0:
+		return "Par"
+	case -1:
+		return "Birdie"
+	case -2:
+		return "Eagle"
+	case -3:
+		return "Double Eagle"
+	case 1:
+		return "Bogey"
+	case 2:
+		return "Double Bogey"
+	case 3:
+		return "Triple Bogey"
+	default:
+		return "Quadruple Bogey or Worse"
+	}
 }
