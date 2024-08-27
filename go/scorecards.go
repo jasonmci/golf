@@ -29,10 +29,6 @@ func createScorecard(golferName string, countryFlag string, course Course) Score
 		par = append(par, course.Holes[num].Par)
 	}
 
-	// for _, hole := range course.Holes {
-	// 	par = append(par, hole.Par)
-	// }
-
 	return Scorecard{
 		GolferName: golferName,
 		CountryFlag: countryFlag,
@@ -98,8 +94,6 @@ func printScorecard(scorecard Scorecard) {
 			fmt.Printf("%3d ", total - scorecard.RunningPar[i])
 		}
 	}
-	
-
 	fmt.Println()
 }
 
