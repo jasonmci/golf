@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -117,4 +118,48 @@ func updateScorecard(scorecard *Scorecard, hole int, strokes int){
 	}
 
 	scorecard.Strokes = append(scorecard.Strokes, strokes)
+}
+
+type LeaderBoardEntry struct {
+	Name       		string
+	Country    		string
+	LastHole   		int
+	RunningTotal 	int
+	Diff			string
+}
+
+func LeaderBoard(scorecards []Scorecard) {
+	var leaderBoard []LeaderBoardEntry
+	for _, scorecard := range scorecards {
+
+		// set diff to have a + for all over par scores and E for even
+		var mydiff string
+		diffInt  := scorecard.RunningTotal[len(scorecard.RunningTotal)-1] - scorecard.RunningPar[len(scorecard.RunningPar)-1]
+		if diffInt > 0 {
+			mydiff = "+" + strconv.Itoa(diffInt)
+		} else if diffInt < 0 {
+			mydiff = strconv.Itoa(diffInt)
+		} else if diffInt == 0 {
+			mydiff = "E"
+		}
+
+		leaderBoard = append(leaderBoard, LeaderBoardEntry{
+			Name:         scorecard.GolferName,
+			Country:      scorecard.CountryFlag,
+			LastHole:     len(scorecard.RunningTotal),
+			RunningTotal: scorecard.RunningTotal[len(scorecard.RunningTotal)-1],
+			Diff: 	      mydiff,
+		})
+	}
+
+	sort.Slice(leaderBoard, func(i,j int) bool {
+		return leaderBoard[i].RunningTotal < leaderBoard[j].RunningTotal
+	})
+
+	// Print the leaderboard
+	fmt.Println("Leaderboard:")
+	fmt.Printf("%-20s %-10s %-15s %-10s %10s\n", "Name", "Country", "Last Hole", "Score", "Diff")
+	for _, entry := range leaderBoard {
+		fmt.Printf("%-20s %-10s %-15d %-10d %10s\n", entry.Name, entry.Country, entry.LastHole, entry.RunningTotal, entry.Diff)
+	}
 }
