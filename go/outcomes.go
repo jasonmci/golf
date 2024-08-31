@@ -29,3 +29,4 @@ func rollDice() (int, int, int) {
 	die3 := rand.Intn(6) + 1
 	return die1, die2, die3
 }
+

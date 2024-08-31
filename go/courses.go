@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Hole represents the outcomes for all rolls on a single hole
@@ -18,6 +19,10 @@ type Hole struct {
 type Course struct {
 	Name  string          `json:"name"`
 	Holes map[string]Hole `json:"holes"`
+}
+
+type CourseConditions struct {
+	Daily []string
 }
 
 func loadCourse(name string) Course {
@@ -36,12 +41,43 @@ func loadCourse(name string) Course {
 	return course
 }
 
-func holeOutcome(course Course, holeNumber string, playerOutcome string, thirdDie int) (int, string, error) {
+
+// This is a basic set of modifiers that can eventaully be set in the course data json
+func courseModifiers(courseCondition int, wind int, rough int) *CourseConditions {
+
+	dailyConditions := []string{"X", "x"}
+
+	// write to daily conditions struct
+
+	switch courseCondition {
+	case 1:
+		// append "A" to dailyConditions
+		dailyConditions = append(dailyConditions, "A")
+	case 3,4,5,6:
+		dailyConditions = append(dailyConditions, "b")
+	}
+
+	switch wind {
+	case 6:
+		dailyConditions = append(dailyConditions, "c")
+	}
+
+	switch rough {
+	case 1,2,3,4,5,6:
+		// append nothing	
+	}
+	
+	return &CourseConditions{
+		Daily: dailyConditions,
+	}
+}
+
+func holeOutcome(course Course, loadedPlayer PlayerCard, dailyConditions *CourseConditions, holeNumber string, playerOutcome string, thirdDie int) (int, string, error) {
 	holeData, exists := course.Holes[holeNumber]
 	if !exists {
 		return 0, "", fmt.Errorf("hole %s does not exist", holeNumber)
 	}
-	
+		
 	var holeOutcome string
 	switch thirdDie {
 	case 1, 2:
@@ -51,18 +87,53 @@ func holeOutcome(course Course, holeNumber string, playerOutcome string, thirdDi
 	case 5, 6:
 		holeOutcome = holeData.Outcomes[playerOutcome].P
 	}
-
+	
+	var modifier string
+	for _, letter := range []string{"A", "a", "B", "B", "C", "c", "D", "d", "X", "x"} {
+		if strings.Contains(holeOutcome, letter) {
+			modifier = letter
+			holeOutcome = strings.ReplaceAll(holeOutcome, letter, "")
+			
+		}
+	}
+	
 	outcomeInt, err := strconv.Atoi(holeOutcome)
 	if err != nil {
 		fmt.Print("Error converting string to int")
-		//return 0,"", "", fmt.Errorf("error converting string to int: %v", err)
+	}
+	
+	for _, v := range dailyConditions.Daily {
+		// check of modifier matches v
+		if modifier == v {
+			fmt.Printf("Matched: %s\n", v)
+			if modifier == "A" || modifier == "B" || modifier == "C" || modifier == "D" {  
+				outcomeInt -= 1 
+			}
+			if modifier == "a" || modifier == "b" || modifier == "c" || modifier == "d" {  
+				outcomeInt += 1 
+			}
+			if modifier == "X" && outcomeInt >= loadedPlayer.QuickPlay {
+				outcomeInt = holeData.Par - 1 
+			} else if modifier == "X" && outcomeInt < loadedPlayer.QuickPlay {
+				outcomeInt = holeData.Par
+			}
+
+			if modifier == "x" && outcomeInt >= loadedPlayer.QuickPlay {
+				outcomeInt = holeData.Par + 1
+			} else if modifier == "x" && outcomeInt < loadedPlayer.QuickPlay {
+				outcomeInt = holeData.Par
+			}
+
+		}
 	}
 
 	description := describeHoleOutcome(outcomeInt, holeData.Par)
 	return outcomeInt, description, nil
 }
 
-func describeHoleOutcome(outcomeInt, par int) string {
+// provide the outcome int and the modifier to get the description
+func describeHoleOutcome(outcomeInt int, par int) string {
+
 	switch outcomeInt - par {
 	case 0:
 		return "Par"

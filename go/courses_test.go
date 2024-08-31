@@ -18,7 +18,7 @@ func TestLoadCourse( t *testing.T) {
 			"1": {
 				Par: 4,
 				Outcomes: map[string]Outcome{
-					"4": {W: "4", I: "4", P: "4"},
+					"4": {W: "4a", I: "4B", P: "4X"},
 				},
 			},
 		},
@@ -88,27 +88,38 @@ func TestDescribeHoleOutcome(t *testing.T) {
 		if description != tt.expectedDescription {
 			t.Errorf("Expected description %s, got %s", tt.expectedDescription, description)
 		}
-		
 	}
 }
 
 
 func TestHoleOutcome(t *testing.T) {
 
+	// set course conditions
+	conditions := &CourseConditions{
+		Daily: []string{"X", "x", "a"},
+	}
+
+	loadedPlayer := PlayerCard{
+		Name: "Test Jack Nicklaus",
+		Rolls: map[string]RollOutcome{},
+		QuickPlay: 9,
+	}
+
+	
 	course := Course{
 		Name: "Test Pebble Beach",
 		Holes: map[string]Hole{
 			"1": {
 				Par: 4,
 				Outcomes: map[string]Outcome{
-					"12": {W: "4", I: "5", P: "6"},
-					"34": {W: "3", I: "4", P: "5"},
+					"12": {W: "4a", I: "5A", P: "6X"},
+					"34": {W: "3B", I: "4d", P: "5"},
 				},
 			},
 			"2": {
 				Par: 5,
 				Outcomes: map[string]Outcome{
-					"56": {W: "5", I: "6", P: "7"},
+					"56": {W: "5x", I: "6D", P: "7"},
 				},
 			},
 		},
@@ -122,9 +133,9 @@ func TestHoleOutcome(t *testing.T) {
 		expectedDesc string
 		shouldError bool
 	}{
-		{"1", "12", 1, 4, "Par", false},
+		{"1", "12", 1, 5, "Bogey", false},
 		{"1", "12", 3, 5, "Bogey", false},
-		{"1", "12", 5, 6, "Double Bogey", false},
+		{"1", "12", 5, 4, "Par", false},
 		{"1", "34", 1, 3, "Birdie", false},
 		{"1", "34", 3, 4, "Par", false},
 		{"1", "34", 5, 5, "Bogey", false},
@@ -135,7 +146,7 @@ func TestHoleOutcome(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		outcomeInt, description, err := holeOutcome(course, tt.holeNumber, tt.playerOutcome, tt.thirdDie)
+		outcomeInt, description, err := holeOutcome(course, loadedPlayer, conditions, tt.holeNumber, tt.playerOutcome, tt.thirdDie)
 
 		if (err != nil) != tt.shouldError {
 			t.Errorf("holeOutcome(%s, %s, %d): expected error = %v, got %v",
