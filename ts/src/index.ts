@@ -37,7 +37,6 @@ const main = () => {
 
     const diceRoll = rollDice();
     console.log(`You rolled a ${diceRoll}`);
-
 }
 
 main();
