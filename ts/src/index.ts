@@ -13,16 +13,24 @@ const loadCourseData = (filePath: string): Course => {
     return new Course(jsonData.name, jsonData.holes);
 }
 
+const loadPlayerData = (filePath: string): Player => {
+    const fullPath = path.join(__dirname, filePath);
+    const data = fs.readFileSync(fullPath, 'utf-8');
+    const jsonData = JSON.parse(data);
+
+    return new Player(jsonData.name, jsonData.country, jsonData.qp, jsonData.rolls);
+};
+
 const main = () => {
     console.log("Welcome to TS Golf");
 
-    const playerName = readlineSync.question('Enter player name: ');
-    const player = new Player(playerName);
-
     const course = loadCourseData('../courses/pebble-beach.json');
     // get the player data next.
-    console.log(`Player: ${playerName}, is playing ${course.name}`);
+    console.log(`Playing on ${course.name}`);
 
+    const tigerWoods = loadPlayerData('../player-cards/tiger-woods.json')
+    tigerWoods.printPlayerInfo();
+    
     // what hole number are you playing?
     const holeNumber = readlineSync.question('Enter hole number to view outcomes: ');
     course.printHoleOutcomes(holeNumber);
